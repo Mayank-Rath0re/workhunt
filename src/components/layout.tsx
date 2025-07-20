@@ -1,18 +1,27 @@
-
 'use client';
 
 import * as React from 'react';
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu } from 'lucide-react';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar';
+import { Bot, FilePlus, KeyRound, List, MessageSquare } from 'lucide-react';
 import { ChatArea } from "./chat-area";
 import { ApiKeysPage } from "./api-keys-page";
 import type { Message } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useToast } from '@/hooks/use-toast';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 export function Layout() {
-  const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState('chat'); // 'chat', 'saved-chats', 'api-keys'
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -24,10 +33,10 @@ export function Layout() {
   const [geminiKey, setGeminiKey] = useState('');
   const [googleSearchKey, setGoogleSearchKey] = useState('');
 
-  const { toast } = useToast(); // Get the toast function
+  const { toast } = useToast();
 
   const handleNewChat = () => {
-    if (messages.length > 1) { // Only save if there's a conversation beyond the initial message
+    if (messages.length > 1) {
       setSavedChats([...savedChats, messages]);
     }
     setMessages([
@@ -37,69 +46,84 @@ export function Layout() {
       },
     ]);
     setCurrentPage('chat');
-    setIsOpen(false);
-  };
-
-  const handleSavedChats = () => {
-    setCurrentPage('saved-chats');
-    setIsOpen(false);
-  };
-
-  const handleApiKeys = () => {
-    setCurrentPage('api-keys');
-    setIsOpen(false);
   };
 
   const handleSaveApiKeys = (gemini: string, googleSearch: string) => {
     setGeminiKey(gemini);
     setGoogleSearchKey(googleSearch);
-    setIsOpen(false); // Close the drawer after saving
     toast({
-      // Trigger the toast notification
       title: "API Keys Saved Successfully",
     });
   };
 
   return (
-    <div className="flex h-screen">
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="m-4">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <SheetHeader>
-            <SheetTitle>Menu</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-col space-y-4 p-4">
-            <Button variant="ghost" onClick={handleNewChat}>New Chat</Button>
-            <Button variant="ghost" onClick={handleSavedChats}>Saved Chats</Button>
-            <Button variant="ghost" onClick={handleApiKeys}>API Keys</Button>
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-2">
+            <Bot className="h-8 w-8 text-primary" />
+            <span className="text-xl font-semibold">Work Scraper</span>
           </div>
-        </SheetContent>
-      </Sheet>
-      <div className="flex-1 flex items-center justify-center">
-        {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} geminiKey={geminiKey} googleSearchKey={googleSearchKey} />}
-        {currentPage === 'saved-chats' && (
-          <div>
-            <h2>Saved Chats</h2>
-            {savedChats.map((chat, index) => (
-              <div key={index} className="border p-2 mb-2">
-                {/* Display a summary or the first few messages of each saved chat */}
-                Chat {index + 1}
-              </div>
-            ))}
-          </div>
-        )}
-        {currentPage === 'api-keys' && (
-          <ApiKeysPage
-            geminiKey={geminiKey}
-            googleSearchKey={googleSearchKey}
-            onSave={handleSaveApiKeys}
-          />
-        )}
-      </div>
-    </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleNewChat} isActive={currentPage === 'chat'} tooltip="Start a new chat">
+                <FilePlus />
+                New Chat
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setCurrentPage('saved-chats')} isActive={currentPage === 'saved-chats'} tooltip="View saved chats">
+                <List />
+                Saved Chats
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setCurrentPage('api-keys')} isActive={currentPage === 'api-keys'} tooltip="Manage your API keys">
+                <KeyRound />
+                API Keys
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset className="flex items-center justify-center p-4">
+        <div className="absolute top-4 left-4">
+           <SidebarTrigger />
+        </div>
+        <div className="w-full h-full flex items-center justify-center">
+            {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} geminiKey={geminiKey} googleSearchKey={googleSearchKey} />}
+            {currentPage === 'saved-chats' && (
+              <Card className="w-full max-w-3xl">
+                <CardHeader>
+                  <CardTitle>Saved Chats</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {savedChats.length > 0 ? (
+                    <ul className="space-y-2">
+                      {savedChats.map((chat, index) => (
+                        <li key={index} className="border p-4 rounded-md hover:bg-muted transition-colors">
+                          <p className="font-semibold">Chat {index + 1}</p>
+                          <p className="text-sm text-muted-foreground truncate">{chat[1]?.content || 'Empty chat'}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No saved chats yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+            {currentPage === 'api-keys' && (
+              <ApiKeysPage
+                geminiKey={geminiKey}
+                googleSearchKey={googleSearchKey}
+                onSave={handleSaveApiKeys}
+              />
+            )}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
