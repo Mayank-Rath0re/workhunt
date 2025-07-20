@@ -1,17 +1,28 @@
-
+// src/lib/actions.ts
 'use server';
 
-import { chat } from '@/ai/chat_flow'; // Updated import path
+import { chat } from '@/ai/chat_flow';
 import type { Message } from '@/lib/types';
 
-export async function getAiResponse(history: Message[], newMessage: string) { // Removed geminiKey parameter
-  
+// Accept geminiKey as a parameter
+export async function getAiResponse(history: Message[], newMessage: string, geminiKey: string) {
+  console.log('Calling getAiResponse with message:', newMessage);
+  console.log('Using Gemini Key:', geminiKey ? '******' + geminiKey.slice(-4) : 'Not set');
   try {
-    const response = await chat(newMessage); // Pass only the new message
+    console.log('Calling chat function...');
+    // Pass the geminiKey to the chat function
+    const response = await chat(newMessage, geminiKey);
+    console.log('Response from chat function in actions: ', response); // Added logging here
     return { success: true, response };
   } catch (error) {
     console.error('Error getting AI response:', error);
-    return { success: false, error: 'Failed to get AI response from the server.' };
+    let errorMessage = 'An unknown error occurred.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    return { success: false, error: `Failed to get AI response from the server: ${errorMessage}` };
   }
 }
 

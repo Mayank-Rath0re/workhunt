@@ -4,6 +4,9 @@ export const runTerminalCommand = (command: string, inputData?: string): Promise
   return new Promise((resolve, reject) => {
     const process = exec(command, (error, stdout, stderr) => {
       if (error) {
+        console.error('Error executing command:', command);
+        console.error('Error details:', error);
+        console.error('Stderr:', stderr);
         reject(error);
       } else {
         resolve({ stdout, stderr });

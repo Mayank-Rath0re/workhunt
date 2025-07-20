@@ -1,13 +1,13 @@
-
+// src/components/chat-area.tsx
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Download, Loader2, Send, User } from 'lucide-react'; // Removed Sparkles import
+import { Bot, Download, Loader2, Send, User } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { getAiResponse } from '@/lib/actions'; // Removed getSummary import
+import { getAiResponse } from '@/lib/actions';
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'; // Keep AlertDialog imports for now, might be used elsewhere
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,7 +52,6 @@ interface ChatAreaProps {
 export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: ChatAreaProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
-  // Removed summary, isSummaryLoading, and isSummaryDialogOpen state
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof chatFormSchema>>({
@@ -86,8 +85,6 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
     URL.revokeObjectURL(url);
   };
 
-  // Removed handleSummarize function
-
   const onSubmit = async (data: z.infer<typeof chatFormSchema>) => {
     if (!geminiKey || !googleSearchKey) {
       toast({
@@ -105,15 +102,16 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
     setIsLoading(true);
     form.reset();
 
-    const result = await getAiResponse([],data.message); // Updated getAiResponse call
+    // Pass the geminiKey to getAiResponse
+    const result = await getAiResponse([], data.message, geminiKey);
     setIsLoading(false);
 
     if (result.success) {
       const assistantMessage: Message = {
         role: 'assistant',
-        content: result.response ?? 'An error occurred and no response was received.', // Handle undefined response
+        content: Array.isArray(result.response) ? result.response.join('\n') : result.response ?? 'An error occurred and no response was received.',
       };
-      // Replace the 'finding work' message with the actual response
+
       setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(assistantMessage));
     } else {
       toast({
@@ -126,7 +124,6 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
         content:
           'Sorry, something went wrong. Please try again.',
       };
-       // Replace the 'finding work' message with the error message
       setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(errorMessage));
     }
   };
@@ -150,7 +147,6 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
-              {/* Removed Summarize Button */}
               <Button
                 variant="outline"
                 size="icon"
@@ -259,8 +255,6 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
           </div>
         </CardContent>
       </Card>
-
-      {/* Removed AlertDialog for Summary */}
     </>
   );
 }

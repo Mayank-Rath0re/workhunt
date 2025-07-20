@@ -1,24 +1,30 @@
-import { runTerminalCommand } from './terminalUtils';
+import { generateGeminiResponse } from './gemini';
+// import { webSearch } from './web_search'; // Disconnected for now
 
-export const chat = async (message: string) => {
-  // Prepare the input data for the Python script
-  const inputData = JSON.stringify({
-    message: message,
-  });
+export const chat = async (message: string, apiKey: string) => {
+  console.log(`Calling generateGeminiResponse with message: ${message}`);
 
-  // Run the Python script and capture its output
-  const command = `python src/ai/generate_gemini_response.py`;
-  
   try {
-    const result = await runTerminalCommand(command, inputData);
+    const prompt = `Generate exactly 10 Google dorking queries to find job opportunities based on the following domain/keywords: ${message}
 
-    // Parse the JSON output from the Python script
-    const output = JSON.parse(result.stdout);
+Please provide only the list of 10 dorking queries, one per line, without any additional text or explanations.`;
 
-    // Return the response from the Python script
-    return output.response;
-  } catch (error) {
-    console.error('Error running Python script:', error);
-    throw new Error('Failed to get response from AI model.');
+    const response = await generateGeminiResponse([], prompt, apiKey);
+    console.log(`Response from generateGeminiResponse in chat_flow: ${response}`);
+
+    const dorkingQueries = response.split('\\n').filter(query => query.trim() !== '');
+
+    console.log('Dorking queries array:', dorkingQueries);
+
+    // Disconnected web search for now
+    // const searchResults = await Promise.all(dorkingQueries.map(query => webSearch(query, apiKey)));
+    // console.log('Search results:', searchResults);
+    // return searchResults.flat().map(result => result.snippet);
+
+    return dorkingQueries; // Return the dorking queries directly
+
+  } catch (error: any) {
+    console.error('Error generating Gemini response:', error);
+    throw new Error(`Failed to get response from AI model: ${error.message}`);
   }
 };
