@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Clipboard, Check, Download, Loader2, Send, User } from 'lucide-react';
+import { Bot, Clipboard, Check, Download, Loader2, Send, User, Link as LinkIcon } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -197,21 +197,28 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
                   >
                     {message.role === 'assistant' && message.content.includes('\n') ? (
                       <div className="space-y-2">
-                        {message.content.split('\n').map((line, i) => (
+                        {message.content.split('\n').filter(line => line.trim()).map((line, i) => (
                           <div key={i} className="flex items-center justify-between p-2 rounded-md bg-background/50">
-                            <span className="font-mono text-xs">{line}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => handleCopy(line, `${index}-${i}`)}
-                            >
-                              {copiedStates[`${index}-${i}`] ? (
-                                <Check className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <Clipboard className="h-3 w-3" />
-                              )}
-                            </Button>
+                            <span className="font-mono text-xs flex-grow">{line}</span>
+                            <div className="flex items-center shrink-0 ml-2">
+                              <a href={`https://www.google.com/search?q=${encodeURIComponent(line)}`} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <LinkIcon className="h-3 w-3" />
+                                </Button>
+                              </a>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleCopy(line, `${index}-${i}`)}
+                              >
+                                {copiedStates[`${index}-${i}`] ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Clipboard className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
