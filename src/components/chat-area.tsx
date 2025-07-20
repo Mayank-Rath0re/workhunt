@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Download, Loader2, Send, User } from 'lucide-react';
+import { Bot, Clipboard, Check, Download, Loader2, Send, User } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -52,6 +52,7 @@ interface ChatAreaProps {
 export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: ChatAreaProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [copiedStates, setCopiedStates] = React.useState<Record<string, boolean>>({});
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof chatFormSchema>>({
@@ -69,6 +70,14 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
       });
     }
   }, [messages]);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedStates(prev => ({...prev, [id]: true}));
+    setTimeout(() => {
+      setCopiedStates(prev => ({...prev, [id]: false}));
+    }, 2000);
+  };
 
   const handleDownload = () => {
     const fileContent = messages
@@ -182,12 +191,33 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
                       'max-w-md rounded-xl px-4 py-3 text-sm shadow-sm',
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                        : 'bg-muted',
+                      message.role === 'assistant' && message.content.includes('\n') && 'w-full max-w-xl'
                     )}
                   >
-                    {message.content.split('\\n').map((line, i) => (
-                      <p key={i}>{line}</p>
-                    ))}
+                    {message.role === 'assistant' && message.content.includes('\n') ? (
+                      <div className="space-y-2">
+                        {message.content.split('\n').map((line, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 rounded-md bg-background/50">
+                            <span className="font-mono text-xs">{line}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleCopy(line, `${index}-${i}`)}
+                            >
+                              {copiedStates[`${index}-${i}`] ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Clipboard className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>{message.content}</p>
+                    )}
                   </div>
                   {message.role === 'user' && (
                     <Avatar className="h-9 w-9 border">

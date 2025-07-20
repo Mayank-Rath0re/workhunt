@@ -12,7 +12,7 @@ Please provide only the list of 10 dorking queries, one per line, without any ad
     const response = await generateGeminiResponse([], prompt, apiKey);
     console.log(`Response from generateGeminiResponse in chat_flow: ${response}`);
 
-    const dorkingQueries = response.split('\\n').filter(query => query.trim() !== '');
+    const dorkingQueries = response.split('\n').filter(query => query.trim() !== '');
 
     console.log('Dorking queries array:', dorkingQueries);
 
