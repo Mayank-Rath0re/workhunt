@@ -1,8 +1,9 @@
+
 // src/components/chat-area.tsx
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Clipboard, Check, Download, Loader2, Send, User, Link as LinkIcon } from 'lucide-react';
+import { Bot, Clipboard, Check, Download, Send, User, Link as LinkIcon } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -11,15 +12,7 @@ import { getAiResponse } from '@/lib/actions';
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -45,9 +38,11 @@ const chatFormSchema = z.object({
 interface ChatAreaProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  apiKey: string | null;
+  onMissingApiKey: () => void;
 }
 
-export function ChatArea({ messages, setMessages }: ChatAreaProps) {
+export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: ChatAreaProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [copiedStates, setCopiedStates] = React.useState<Record<string, boolean>>({});
@@ -93,13 +88,23 @@ export function ChatArea({ messages, setMessages }: ChatAreaProps) {
   };
 
   const onSubmit = async (data: z.infer<typeof chatFormSchema>) => {
+    if (!apiKey) {
+      onMissingApiKey();
+      toast({
+        variant: 'destructive',
+        title: 'API Key Required',
+        description: 'Please add your Gemini API key to continue.',
+      });
+      return;
+    }
+
     const userMessage: Message = { role: 'user', content: data.message };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
     form.reset();
 
-    const result = await getAiResponse([], data.message);
+    const result = await getAiResponse([], data.message, apiKey);
     setIsLoading(false);
 
     if (result.success) {
@@ -182,7 +187,12 @@ export function ChatArea({ messages, setMessages }: ChatAreaProps) {
                       message.role === 'assistant' && message.content.includes('\n') && 'w-full max-w-xl'
                     )}
                   >
-                    {message.role === 'assistant' && message.content.includes('\n') ? (
+                    {isLoading && index === messages.length - 1 ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                        Finding jobs...
+                      </div>
+                    ) : message.role === 'assistant' && message.content.includes('\n') ? (
                       <div className="space-y-2">
                         {message.content.split('\n').filter(line => line.trim()).map((line, i) => (
                           <div key={i} className="flex items-center justify-between p-2 rounded-md bg-background/50">

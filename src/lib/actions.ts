@@ -1,3 +1,4 @@
+
 // src/lib/actions.ts
 'use server';
 
@@ -5,12 +6,11 @@ import { chat } from '@/ai/chat_flow';
 import type { Message } from '@/lib/types';
 
 // Accept geminiKey as a parameter
-export async function getAiResponse(history: Message[], newMessage: string) {
+export async function getAiResponse(history: Message[], newMessage: string, geminiKey: string) {
   console.log('Calling getAiResponse with message:', newMessage);
-  const geminiKey = process.env.GEMINI_API_KEY || '';
   
   if (!geminiKey) {
-     return { success: false, error: `The GEMINI_API_KEY environment variable is not set. Please add it to the .env file.` };
+     return { success: false, error: `The Gemini API key is not set. Please add it via the settings.` };
   }
 
   try {

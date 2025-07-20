@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,22 +14,24 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import { Bot, FilePlus, KeyRound, List, MessageSquare } from 'lucide-react';
+import { Bot, FilePlus, KeyRound, List } from 'lucide-react';
 import { ChatArea } from "./chat-area";
 import type { Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { ApiKeyDialog } from './api-key-dialog';
 
 export function Layout() {
   const [currentPage, setCurrentPage] = useState('chat'); // 'chat', 'saved-chats'
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello! I'm Work Scraper. How can I help you find jobs today?",
+      content: "Hello! I'm Work Scraper. Provide an API Key to get started.",
     },
   ]);
   const [savedChats, setSavedChats] = useState<Message[][]>([]);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
  
   const { toast } = useToast();
 
@@ -44,6 +47,20 @@ export function Layout() {
     ]);
     setCurrentPage('chat');
   };
+
+  React.useEffect(() => {
+    const storedKey = localStorage.getItem('gemini-api-key');
+    if (storedKey) {
+      setApiKey(storedKey);
+    } else {
+      setIsApiKeyDialogOpen(true);
+    }
+  }, []);
+
+  const handleApiKeySubmit = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('gemini-api-key', key);
+  }
 
   return (
     <SidebarProvider>
@@ -68,6 +85,12 @@ export function Layout() {
                 Saved Chats
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setIsApiKeyDialogOpen(true)} tooltip="Set API Key">
+                <KeyRound />
+                API Key
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -76,7 +99,7 @@ export function Layout() {
            <SidebarTrigger />
         </div>
         <div className="w-full h-full flex items-center justify-center">
-            {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} />}
+            {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} apiKey={apiKey} onMissingApiKey={() => setIsApiKeyDialogOpen(true)} />}
             {currentPage === 'saved-chats' && (
               <Card className="w-full max-w-3xl">
                 <CardHeader>
@@ -100,6 +123,11 @@ export function Layout() {
             )}
         </div>
       </SidebarInset>
+      <ApiKeyDialog 
+        isOpen={isApiKeyDialogOpen}
+        onClose={() => setIsApiKeyDialogOpen(false)}
+        onApiKeySubmit={handleApiKeySubmit}
+      />
     </SidebarProvider>
   );
 }
