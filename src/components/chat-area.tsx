@@ -3,7 +3,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Clipboard, Check, Download, Send, User, Link as LinkIcon } from 'lucide-react';
+import { Bot, Clipboard, Check, Download, Send, User, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -87,6 +87,21 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
     URL.revokeObjectURL(url);
   };
 
+  const handleError = (error: string, userMessageContent: string) => {
+    toast({
+      variant: 'destructive',
+      title: 'Error',
+      description: error,
+    });
+    const errorMessage: Message = {
+      role: 'assistant',
+      content: `Sorry, something went wrong. Please try again.`,
+      isError: true
+    };
+    setMessages(prev => prev.slice(0, -1).concat(errorMessage)); // Replace user message with error
+    form.setValue('message', userMessageContent); // Restore user message in input
+  };
+
   const onSubmit = async (data: z.infer<typeof chatFormSchema>) => {
     if (!apiKey) {
       onMissingApiKey();
@@ -107,25 +122,16 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
     const result = await getAiResponse([], data.message, apiKey);
     setIsLoading(false);
 
-    if (result.success) {
+    if (result.success && result.response && (Array.isArray(result.response) ? result.response.length > 0 : result.response.trim() !== '')) {
       const assistantMessage: Message = {
         role: 'assistant',
-        content: Array.isArray(result.response) ? result.response.join('\n') : result.response ?? 'An error occurred and no response was received.',
+        content: Array.isArray(result.response) ? result.response.join('\n') : result.response,
       };
 
       setMessages(newMessages.concat(assistantMessage));
     } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: result.error,
-      });
-      const errorMessage: Message = {
-        role: 'assistant',
-        content:
-          'Sorry, something went wrong. Please try again.',
-      };
-      setMessages(newMessages.concat(errorMessage));
+      const error = result.error || "The AI returned an empty response. Please try again.";
+      handleError(error, data.message);
     }
   };
 
@@ -174,7 +180,7 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
                   {message.role === 'assistant' && (
                     <Avatar className="h-9 w-9 border">
                       <AvatarFallback>
-                        <Bot className="h-5 w-5 text-primary" />
+                         {message.isError ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <Bot className="h-5 w-5 text-primary" />}
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -183,8 +189,8 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
                       'max-w-md rounded-xl px-4 py-3 text-sm shadow-sm',
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted',
-                      message.role === 'assistant' && message.content.includes('\n') && 'w-full max-w-xl'
+                        : message.isError ? 'bg-destructive/10 text-destructive-foreground' : 'bg-muted',
+                      message.role === 'assistant' && message.content.includes('\n') && !message.isError && 'w-full max-w-xl'
                     )}
                   >
                     {isLoading && index === messages.length - 1 ? (
@@ -192,7 +198,7 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
                         <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
                         Finding jobs...
                       </div>
-                    ) : message.role === 'assistant' && message.content.includes('\n') ? (
+                    ) : message.role === 'assistant' && message.content.includes('\n') && !message.isError ? (
                       <div className="space-y-2">
                         {message.content.split('\n').filter(line => line.trim()).map((line, i) => (
                           <div key={i} className="flex items-center justify-between p-2 rounded-md bg-background/50">
