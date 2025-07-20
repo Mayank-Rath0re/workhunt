@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'FlutterFlow AI Assistant',
-  description: 'An AI-powered chatbot to help with your FlutterFlow questions.',
+  title: 'Work Scraper',
+  description: 'An AI-powered job scraper.',
 };
 
 export default function RootLayout({

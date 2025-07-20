@@ -17,7 +17,7 @@ export function Layout() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello! I'm FlutterFlow AI. How can I help you today?",
+      content: "Hello! I'm Work Scraper. How can I help you find jobs today?",
     },
   ]);
   const [savedChats, setSavedChats] = useState<Message[][]>([]);
@@ -33,7 +33,7 @@ export function Layout() {
     setMessages([
       {
         role: 'assistant',
-        content: "Hello! I'm FlutterFlow AI. How can I help you today?",
+        content: "Hello! I'm Work Scraper. How can I help you find jobs today?",
       },
     ]);
     setCurrentPage('chat');

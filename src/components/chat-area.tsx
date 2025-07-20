@@ -78,7 +78,7 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'flutterflow-ai-chat.txt';
+    a.download = 'work-scraper-chat.txt';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -143,7 +143,7 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
             <div className="flex items-center gap-3">
               <Bot className="h-8 w-8 text-primary" />
               <CardTitle className="font-headline text-2xl">
-                FlutterFlow AI Assistant
+                Work Scraper
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
                     <FormItem className="flex-1">
                       <FormControl>
                         <Textarea
-                          placeholder="Ask about FlutterFlow or anything else..."
+                          placeholder="Enter keywords or a domain to find jobs..."
                           className="max-h-48 resize-none"
                           rows={1}
                           onInput={onTextareaInput}
