@@ -15,14 +15,13 @@ import {
 } from '@/components/ui/sidebar';
 import { Bot, FilePlus, KeyRound, List, MessageSquare } from 'lucide-react';
 import { ChatArea } from "./chat-area";
-import { ApiKeysPage } from "./api-keys-page";
 import type { Message } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 export function Layout() {
-  const [currentPage, setCurrentPage] = useState('chat'); // 'chat', 'saved-chats', 'api-keys'
+  const [currentPage, setCurrentPage] = useState('chat'); // 'chat', 'saved-chats'
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -30,9 +29,7 @@ export function Layout() {
     },
   ]);
   const [savedChats, setSavedChats] = useState<Message[][]>([]);
-  const [geminiKey, setGeminiKey] = useState('');
-  const [googleSearchKey, setGoogleSearchKey] = useState('');
-
+ 
   const { toast } = useToast();
 
   const handleNewChat = () => {
@@ -46,14 +43,6 @@ export function Layout() {
       },
     ]);
     setCurrentPage('chat');
-  };
-
-  const handleSaveApiKeys = (gemini: string, googleSearch: string) => {
-    setGeminiKey(gemini);
-    setGoogleSearchKey(googleSearch);
-    toast({
-      title: "API Keys Saved Successfully",
-    });
   };
 
   return (
@@ -79,12 +68,6 @@ export function Layout() {
                 Saved Chats
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => setCurrentPage('api-keys')} isActive={currentPage === 'api-keys'} tooltip="Manage your API keys">
-                <KeyRound />
-                API Keys
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -93,7 +76,7 @@ export function Layout() {
            <SidebarTrigger />
         </div>
         <div className="w-full h-full flex items-center justify-center">
-            {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} geminiKey={geminiKey} googleSearchKey={googleSearchKey} />}
+            {currentPage === 'chat' && <ChatArea messages={messages} setMessages={setMessages} />}
             {currentPage === 'saved-chats' && (
               <Card className="w-full max-w-3xl">
                 <CardHeader>
@@ -114,13 +97,6 @@ export function Layout() {
                   )}
                 </CardContent>
               </Card>
-            )}
-            {currentPage === 'api-keys' && (
-              <ApiKeysPage
-                geminiKey={geminiKey}
-                googleSearchKey={googleSearchKey}
-                onSave={handleSaveApiKeys}
-              />
             )}
         </div>
       </SidebarInset>

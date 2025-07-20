@@ -5,9 +5,14 @@ import { chat } from '@/ai/chat_flow';
 import type { Message } from '@/lib/types';
 
 // Accept geminiKey as a parameter
-export async function getAiResponse(history: Message[], newMessage: string, geminiKey: string) {
+export async function getAiResponse(history: Message[], newMessage: string) {
   console.log('Calling getAiResponse with message:', newMessage);
-  console.log('Using Gemini Key:', geminiKey ? '******' + geminiKey.slice(-4) : 'Not set');
+  const geminiKey = process.env.GEMINI_API_KEY || '';
+  
+  if (!geminiKey) {
+     return { success: false, error: `The GEMINI_API_KEY environment variable is not set. Please add it to the .env file.` };
+  }
+
   try {
     console.log('Calling chat function...');
     // Pass the geminiKey to the chat function
@@ -25,5 +30,3 @@ export async function getAiResponse(history: Message[], newMessage: string, gemi
     return { success: false, error: `Failed to get AI response from the server: ${errorMessage}` };
   }
 }
-
-// Removed getSummary function as it was related to the old flow

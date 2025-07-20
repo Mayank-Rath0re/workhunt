@@ -45,11 +45,9 @@ const chatFormSchema = z.object({
 interface ChatAreaProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  geminiKey: string;
-  googleSearchKey: string;
 }
 
-export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: ChatAreaProps) {
+export function ChatArea({ messages, setMessages }: ChatAreaProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
   const [copiedStates, setCopiedStates] = React.useState<Record<string, boolean>>({});
@@ -95,24 +93,13 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
   };
 
   const onSubmit = async (data: z.infer<typeof chatFormSchema>) => {
-    if (!geminiKey || !googleSearchKey) {
-      toast({
-        variant: 'destructive',
-        title: 'API Keys Missing',
-        description: 'Please provide your API keys in the API Keys page.',
-      });
-      return;
-    }
-
     const userMessage: Message = { role: 'user', content: data.message };
-    const findingWorkMessage: Message = { role: 'assistant', content: 'finding jobs' };
-    const newMessages = [...messages, userMessage, findingWorkMessage];
+    const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
     form.reset();
 
-    // Pass the geminiKey to getAiResponse
-    const result = await getAiResponse([], data.message, geminiKey);
+    const result = await getAiResponse([], data.message);
     setIsLoading(false);
 
     if (result.success) {
@@ -121,7 +108,7 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
         content: Array.isArray(result.response) ? result.response.join('\n') : result.response ?? 'An error occurred and no response was received.',
       };
 
-      setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(assistantMessage));
+      setMessages(newMessages.concat(assistantMessage));
     } else {
       toast({
         variant: 'destructive',
@@ -133,7 +120,7 @@ export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: 
         content:
           'Sorry, something went wrong. Please try again.',
       };
-      setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(errorMessage));
+      setMessages(newMessages.concat(errorMessage));
     }
   };
 
