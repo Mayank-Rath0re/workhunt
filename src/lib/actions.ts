@@ -1,21 +1,13 @@
 
 'use server';
 
-import { chat } from '@/ai/flows/chat';
-import { summarizeDesignDecisions } from '@/ai/flows/summarize-design-decisions';
+import { chat } from '@/ai/chat_flow'; // Updated import path
 import type { Message } from '@/lib/types';
 
-export async function getAiResponse(history: Message[], newMessage: string) {
-  const modelHistory = history.map((msg) => ({
-    role: msg.role === 'user' ? ('user' as const) : ('model' as const),
-    content: msg.content,
-  }));
-
+export async function getAiResponse(history: Message[], newMessage: string) { // Removed geminiKey parameter
+  
   try {
-    const response = await chat({
-      history: modelHistory,
-      message: newMessage,
-    });
+    const response = await chat(newMessage); // Pass only the new message
     return { success: true, response };
   } catch (error) {
     console.error('Error getting AI response:', error);
@@ -23,16 +15,4 @@ export async function getAiResponse(history: Message[], newMessage: string) {
   }
 }
 
-export async function getSummary(chatHistory: Message[]) {
-  const historyString = chatHistory
-    .map((msg) => `${msg.role}: ${msg.content}`)
-    .join('\n');
-
-  try {
-    const result = await summarizeDesignDecisions({ chatHistory: historyString });
-    return { success: true, summary: result.summary };
-  } catch (error) {
-    console.error('Error getting summary:', error);
-    return { success: false, error: 'Failed to generate a summary.' };
-  }
-}
+// Removed getSummary function as it was related to the old flow

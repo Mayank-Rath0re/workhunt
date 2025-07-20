@@ -2,12 +2,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Bot, Download, Loader2, Send, Sparkles, User } from 'lucide-react';
+import { Bot, Download, Loader2, Send, User } from 'lucide-react'; // Removed Sparkles import
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { getAiResponse, getSummary } from '@/lib/actions';
+import { getAiResponse } from '@/lib/actions'; // Removed getSummary import
 import type { Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog'; // Keep AlertDialog imports for now, might be used elsewhere
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,18 +42,17 @@ const chatFormSchema = z.object({
   message: z.string().min(1, { message: 'Message cannot be empty.' }),
 });
 
-export function ChatArea() {
+interface ChatAreaProps {
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  geminiKey: string;
+  googleSearchKey: string;
+}
+
+export function ChatArea({ messages, setMessages, geminiKey, googleSearchKey }: ChatAreaProps) {
   const { toast } = useToast();
-  const [messages, setMessages] = React.useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hello! I'm FlutterFlow AI. How can I help you today?",
-    },
-  ]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [summary, setSummary] = React.useState('');
-  const [isSummaryLoading, setIsSummaryLoading] = React.useState(false);
-  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = React.useState(false);
+  // Removed summary, isSummaryLoading, and isSummaryDialogOpen state
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof chatFormSchema>>({
@@ -75,7 +74,7 @@ export function ChatArea() {
   const handleDownload = () => {
     const fileContent = messages
       .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
-      .join('\n\n');
+      .join('');
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -87,42 +86,35 @@ export function ChatArea() {
     URL.revokeObjectURL(url);
   };
 
-  const handleSummarize = async () => {
-    setIsSummaryLoading(true);
-    const result = await getSummary(messages);
-    setIsSummaryLoading(false);
-    if (result.success && result.summary) {
-      setSummary(result.summary);
-      setIsSummaryDialogOpen(true);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Summarization Failed',
-        description:
-          result.error || 'Could not generate a summary of the conversation.',
-      });
-    }
-  };
+  // Removed handleSummarize function
 
   const onSubmit = async (data: z.infer<typeof chatFormSchema>) => {
+    if (!geminiKey || !googleSearchKey) {
+      toast({
+        variant: 'destructive',
+        title: 'API Keys Missing',
+        description: 'Please provide your API keys in the API Keys page.',
+      });
+      return;
+    }
+
     const userMessage: Message = { role: 'user', content: data.message };
-    const newMessages = [...messages, userMessage];
+    const findingWorkMessage: Message = { role: 'assistant', content: 'finding jobs' };
+    const newMessages = [...messages, userMessage, findingWorkMessage];
     setMessages(newMessages);
     setIsLoading(true);
     form.reset();
 
-    const result = await getAiResponse(
-      messages,
-      data.message
-    );
+    const result = await getAiResponse([],data.message); // Updated getAiResponse call
     setIsLoading(false);
 
     if (result.success) {
       const assistantMessage: Message = {
         role: 'assistant',
-        content: result.response,
+        content: result.response ?? 'An error occurred and no response was received.', // Handle undefined response
       };
-      setMessages([...newMessages, assistantMessage]);
+      // Replace the 'finding work' message with the actual response
+      setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(assistantMessage));
     } else {
       toast({
         variant: 'destructive',
@@ -134,7 +126,8 @@ export function ChatArea() {
         content:
           'Sorry, something went wrong. Please try again.',
       };
-      setMessages([...newMessages, errorMessage]);
+       // Replace the 'finding work' message with the error message
+      setMessages(newMessages.filter(msg => msg.content !== 'finding jobs').concat(errorMessage));
     }
   };
 
@@ -157,19 +150,7 @@ export function ChatArea() {
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleSummarize}
-                disabled={isSummaryLoading || messages.length <= 1}
-                aria-label="Summarize Conversation"
-              >
-                {isSummaryLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-              </Button>
+              {/* Removed Summarize Button */}
               <Button
                 variant="outline"
                 size="icon"
@@ -208,7 +189,7 @@ export function ChatArea() {
                         : 'bg-muted'
                     )}
                   >
-                    {message.content.split('\n').map((line, i) => (
+                    {message.content.split('\\n').map((line, i) => (
                       <p key={i}>{line}</p>
                     ))}
                   </div>
@@ -279,24 +260,7 @@ export function ChatArea() {
         </CardContent>
       </Card>
 
-      <AlertDialog
-        open={isSummaryDialogOpen}
-        onOpenChange={setIsSummaryDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="font-headline">
-              Conversation Summary
-            </AlertDialogTitle>
-            <AlertDialogDescription className="max-h-80 overflow-y-auto">
-              {summary}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button onClick={() => setIsSummaryDialogOpen(false)}>Close</Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Removed AlertDialog for Summary */}
     </>
   );
 }
