@@ -1,4 +1,3 @@
-
 // src/components/chat-area.tsx
 'use client';
 
@@ -30,6 +29,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const chatFormSchema = z.object({
   message: z.string().min(1, { message: 'Message cannot be empty.' }),
@@ -153,7 +153,13 @@ export function ChatArea({ messages, setMessages, apiKey, onMissingApiKey }: Cha
                 Work Scraper
               </CardTitle>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Made with Firebase Studio</p>
+                <Link href="https://github.com/Mayank-Rath0re/workhunt" target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                    Link to GitHub
+                </Link>
+              </div>
               <Button
                 variant="outline"
                 size="icon"
